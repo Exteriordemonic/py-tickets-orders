@@ -45,6 +45,23 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
+    def get_queryset(self):
+        queryset = self.queryset
+        actors = self.request.query_params.get("actors")
+        genres = self.request.query_params.get("genres")
+        title = self.request.query_params.get("title")
+
+        if actors:
+            queryset = queryset.filter(actors__id__in=actors)
+
+        if genres:
+            queryset = queryset.filter(genres__id__in=genres)
+
+        if title:
+            queryset = queryset.filter(title__contains=title)
+
+        return queryset
+
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
