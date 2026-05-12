@@ -3,6 +3,7 @@ from django.db.models import Count, F, IntegerField, ExpressionWrapper
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
+from cinema.paginations import StandardResultsSetPagination
 from cinema.serializers import (
     GenreSerializer,
     ActorSerializer,
@@ -53,10 +54,12 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if actors:
-            queryset = queryset.filter(actors__id__in=actors)
+            actors_ids = actors.split(",")
+            queryset = queryset.filter(actors__id__in=actors_ids)
 
         if genres:
-            queryset = queryset.filter(genres__id__in=genres)
+            genres_ids = genres.split(",")
+            queryset = queryset.filter(genres__id__in=genres_ids)
 
         if title:
             queryset = queryset.filter(title__contains=title)
@@ -106,6 +109,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
+    pagination_class = StandardResultsSetPagination
 
     def get_serializer_class(self):
         if self.action == "list":
