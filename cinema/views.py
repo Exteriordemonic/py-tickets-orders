@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from django.db.models import Count, F, IntegerField, ExpressionWrapper
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
@@ -77,7 +78,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = self.queryset.select_related(
+            "movie",
+            "cinema_hall",
+        )
 
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
@@ -87,6 +91,15 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         if movie:
             queryset = queryset.filter(movie_id=movie)
+
+        if self.action == "list":
+            queryset = queryset.annotate(
+                tickets_available=ExpressionWrapper(
+                    F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
+                    - Count("tickets"),
+                    output_field=IntegerField(),
+                )
+            )
 
         return queryset
 
